@@ -1,15 +1,21 @@
 package com.kevin.shoppinglist;
 
 import android.app.Activity;
+import android.content.DialogInterface;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.ActionMode;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ListView;
 
 import java.util.List;
@@ -55,10 +61,18 @@ public class DisplaySearchResult extends AppCompatActivity {
         ProductsListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
 
         ProductsListView.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener() {
+            int selCount = 0;
 
             @Override
             public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
-
+                if (checked) {
+                    selCount++;
+                } else {
+                    selCount--;
+                }
+                String cabTitle = selCount + " " + getString(R.string.cab_checked_string);
+                mode.setTitle(cabTitle);
+                mode.invalidate();
             }
 
             @Override
@@ -69,19 +83,26 @@ public class DisplaySearchResult extends AppCompatActivity {
 
             @Override
             public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-                return false;
+                MenuItem item = menu.findItem(R.id.cab_modify);
+                if (selCount == 1) {
+                    item.setVisible(true);
+                } else {
+                    item.setVisible(false);
+                }
+                return true;
             }
 
             @Override
             public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-                switch (item.getItemId()) {
+                boolean returnValue = true;
+                SparseBooleanArray touchedProductsPositions = ProductsListView.getCheckedItemPositions();
 
+                switch (item.getItemId()) {
                     case R.id.cab_delete:
-                        SparseBooleanArray touchedShoppingMemosPositions = ProductsListView.getCheckedItemPositions();
-                        for (int i=0; i < touchedShoppingMemosPositions.size(); i++) {
-                            boolean isChecked = touchedShoppingMemosPositions.valueAt(i);
+                        for (int i = 0; i < touchedProductsPositions.size(); i++) {
+                            boolean isChecked = touchedProductsPositions.valueAt(i);
                             if(isChecked) {
-                                int positionInListView = touchedShoppingMemosPositions.keyAt(i);
+                                int positionInListView = touchedProductsPositions.keyAt(i);
                                 Product product = (Product) ProductsListView.getItemAtPosition(positionInListView);
                                 pds.deleteProduct(product);
 
@@ -89,17 +110,85 @@ public class DisplaySearchResult extends AppCompatActivity {
                         }
                         showAllListEntries(pds.getAllProducts());
                         mode.finish();
-                        return true;
+                        break;
+
+                    case R.id.cab_modify:
+                        Log.d(LOG_TAG, "Eintrag ändern");
+                        for (int i = 0; i < touchedProductsPositions.size(); i++) {
+                            boolean isChecked = touchedProductsPositions.valueAt(i);
+                            if (isChecked) {
+                                int positionInListView = touchedProductsPositions.keyAt(i);
+                                Product product = (Product) ProductsListView.getItemAtPosition(positionInListView);
+                                Log.d(LOG_TAG, "Position im ListView: " + positionInListView + " Inhalt: " + product.toString());
+
+                                AlertDialog editShoppingMemoDialog = createEditShoppingMemoDialog(product);
+                                editShoppingMemoDialog.show();
+                            }
+                        }
+
+                        mode.finish();
+                        break;
 
                     default:
-                        return false;
+                        returnValue = false;
+                        break;
                 }
+                return returnValue;
             }
 
             @Override
             public void onDestroyActionMode(ActionMode mode) {
+                selCount = 0;
 
             }
         });
     }
+
+    private AlertDialog createEditShoppingMemoDialog(final Product product) {
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = getLayoutInflater();
+
+        View dialogsView = inflater.inflate(R.layout.dialog_edit_shopping_list, null);
+
+        final EditText editTextNewQuantity = (EditText) dialogsView.findViewById(R.id.editText_new_quantity);
+        editTextNewQuantity.setText(String.valueOf(product.getQuantity()));
+
+        final EditText editTextNewProduct = (EditText) dialogsView.findViewById(R.id.editText_new_product);
+        editTextNewProduct.setText(product.getProductName());
+
+        builder.setView(dialogsView)
+                .setTitle(R.string.dialog_title)
+                .setPositiveButton(R.string.dialog_button_positive, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                        String quantityString = editTextNewQuantity.getText().toString();
+                        String productText = editTextNewProduct.getText().toString();
+
+                        if ((TextUtils.isEmpty(quantityString)) || (TextUtils.isEmpty(productText))) {
+                            Log.d(LOG_TAG, "Ein Eintrag enthielt keinen Text. Daher Abbruch der Änderung.");
+                            return;
+                        }
+
+                        int quantity = Integer.parseInt(quantityString);
+
+                        // An dieser Stelle schreiben wir die geänderten Daten in die SQLite Datenbank
+                        Product updatedProduct = pds.updateProduct(product.getId(), productText, quantity);
+
+                        Log.d(LOG_TAG, "Alter Eintrag - ID: " + product.getId() + " Inhalt: " + product.toString());
+                        Log.d(LOG_TAG, "Neuer Eintrag - ID: " + updatedProduct.getId() + " Inhalt: " + updatedProduct.toString());
+
+                        showAllListEntries(pds.getAllProducts());
+                        dialog.dismiss();
+                    }
+                })
+                .setNegativeButton(R.string.dialog_button_negative, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                });
+
+        return builder.create();
+    }
 }
+

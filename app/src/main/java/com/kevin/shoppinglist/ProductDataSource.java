@@ -124,6 +124,27 @@ public class ProductDataSource {
         Log.d(LOG_TAG, "Eintrag gelöscht! ID: " + id + " Inhalt: " + product.toString());
     }
 
+    public Product updateProduct(long id, String newName, int newQuantity) {
+        ContentValues values = new ContentValues();
+        values.put(ProductDbHelper.C_NAME, newName);
+        values.put(ProductDbHelper.C_QUANTITY, newQuantity);
+        open();
+        database.update(ProductDbHelper.T_product,
+                values,
+                ProductDbHelper.C_ID + "=" + id,
+                null);
+
+
+        Cursor cursor = database.query(ProductDbHelper.T_product,
+                columns, ProductDbHelper.C_ID + "=" + id,
+                null, null, null, null);
+
+        cursor.moveToFirst();
+        Product product = cursorToProduct(cursor);
+        cursor.close();
+        close();
+        return product;
+    }
 
 
 }
