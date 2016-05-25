@@ -28,7 +28,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private EditText et_productName;
     private EditText et_searchID;
     private Button bt_search;
-    //private Button   bt_save;
     private Button   bt_clear;
     private Button   bt_showAll;
     private FloatingActionButton fab_save;
@@ -104,6 +103,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 pds.open();
                 Product product = pds.createProduct(productName, quantity);
                 pds.close();
+                clearEditText(editTextList);
+                Snackbar.make(view, product.toString() + " inserted", Snackbar.LENGTH_SHORT).show();
             }else {
                 Snackbar.make(view, "Product Name and Quantity must not be empty!", Snackbar.LENGTH_LONG).show();
                 Log.d(LOG_TAG, "Snackbar executed");

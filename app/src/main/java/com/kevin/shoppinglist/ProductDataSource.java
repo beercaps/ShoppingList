@@ -23,7 +23,8 @@ public class ProductDataSource {
     private String[] columns = {
             ProductDbHelper.C_ID,
             ProductDbHelper.C_NAME,
-            ProductDbHelper.C_QUANTITY};
+            ProductDbHelper.C_QUANTITY,
+            ProductDbHelper.C_IS_CHECKED};
 
     public ProductDataSource(Context context) {
         Log.d(LOG_TAG, "ProductDataSource erzeugt den DBhelper");
@@ -83,12 +84,16 @@ public class ProductDataSource {
         int idIndex = cursor.getColumnIndex(ProductDbHelper.C_ID);
         int idProduct = cursor.getColumnIndex(ProductDbHelper.C_NAME);
         int idQuantity = cursor.getColumnIndex(ProductDbHelper.C_QUANTITY);
+        int idIsChecked = cursor.getColumnIndex(ProductDbHelper.C_IS_CHECKED);
 
         String productName = cursor.getString(idProduct);
         int quantity = cursor.getInt(idQuantity);
         long id = cursor.getLong(idIndex);
+        int intValueChecked = cursor.getInt(idIsChecked);
 
-        Product product = new Product(id, productName, quantity);
+        boolean isChecked = (intValueChecked != 0);
+
+        Product product = new Product(id, productName, quantity, isChecked);
 
         return product;
     }
@@ -124,10 +129,13 @@ public class ProductDataSource {
         Log.d(LOG_TAG, "Eintrag gelöscht! ID: " + id + " Inhalt: " + product.toString());
     }
 
-    public Product updateProduct(long id, String newName, int newQuantity) {
+    public Product updateProduct(long id, String newName, int newQuantity, boolean newChecked) {
+        int intValueChecked = (newChecked) ? 1 : 0;
+
         ContentValues values = new ContentValues();
         values.put(ProductDbHelper.C_NAME, newName);
         values.put(ProductDbHelper.C_QUANTITY, newQuantity);
+        values.put(ProductDbHelper.C_IS_CHECKED, newChecked);
         open();
         database.update(ProductDbHelper.T_product,
                 values,

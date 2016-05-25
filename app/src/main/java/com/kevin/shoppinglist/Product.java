@@ -11,11 +11,13 @@ private final static  String TAG = Product.class.getSimpleName();
     private  long id;
     private  String productName;
     private  int quantity;
+    private boolean isChecked;
 
-    public Product(long id, String name, int quantity) {
+    public Product(long id, String name, int quantity, boolean isChecked) {
         this.id = id;
         this.productName = name;
         this.quantity = quantity;
+        this.isChecked = isChecked;
     }
 
     public long getId() {
@@ -40,6 +42,14 @@ private final static  String TAG = Product.class.getSimpleName();
 
     public void setQuantity(int quantity) {
         this.quantity = quantity;
+    }
+
+    public boolean isChecked() {
+        return isChecked;
+    }
+
+    public void setChecked(boolean checked) {
+        isChecked = checked;
     }
 
     @Override

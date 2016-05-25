@@ -14,19 +14,23 @@ public class ProductDbHelper extends SQLiteOpenHelper {
     public static final  String LOG_TAG = ProductDbHelper.class.getSimpleName();
 
     public  static  final String DB_NAME = "products.db";
-    public  static  final int    DB_VERSION = 1;
+    public static final int DB_VERSION = 2;
 
     public  static  final String T_product = "t_product";
     public  static  final String C_ID = "_id";
     public  static  final String C_NAME = "c_name";
     public  static  final String C_QUANTITY = "c_quantity";
+    public static final String C_IS_CHECKED = "c_is_checked";
+
+    public static final String SQL_DROP = "DROP TABLE IF EXISTS " + T_product;
 
 
     public static final String SQL_CREATE =
             "CREATE TABLE " + T_product +
                     "(" + C_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                     C_NAME + " TEXT NOT NULL, " +
-                    C_QUANTITY + " INTEGER NOT NULL);";
+                    C_QUANTITY + " INTEGER NOT NULL, " +
+                    C_IS_CHECKED + " BOOLEAN NOT NULL DEFAULT 0);";
 
 
     public ProductDbHelper(Context context) {
@@ -47,6 +51,10 @@ public class ProductDbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
+
+        Log.d(LOG_TAG, "Die Tabelle mit Versionsnummer " + i + " wird entfernt.");
+        sqLiteDatabase.execSQL(SQL_DROP);
+        onCreate(sqLiteDatabase);
 
     }
 }
