@@ -102,7 +102,7 @@ public class ProductDataSource {
         List<Product> productList = new ArrayList<>();
         open();
         Cursor cursor = database.query(ProductDbHelper.T_product,
-                columns, null, null, null, null, null);
+                columns, null, null, null, null, ProductDbHelper.C_IS_CHECKED +", "+ProductDbHelper.C_NAME +" COLLATE NOCASE" );
         cursor.moveToFirst();
         Product product;
 
